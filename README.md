@@ -1,6 +1,6 @@
 # Le Veilleur
 
-![Tests](https://github.com/TON_COMPTE/veille-cyber/actions/workflows/tests.yml/badge.svg)
+![Tests](https://github.com/M0ricette/veille-cyber/actions/workflows/tests.yml/badge.svg)
 
 Un agent IA qui lit chaque matin une dizaine de sources cyber et m'envoie un journal en PDF : un article de une développé, des brèves classées par rubrique, une notion à apprendre et un rappel des notions passées. Chaque information renvoie à sa source, et c'est du code, pas le modèle, qui le vérifie.
 
