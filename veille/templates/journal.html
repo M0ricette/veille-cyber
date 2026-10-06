@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>{{ nom }} · {{ date_longue }}</title>
+<style>
+{{ polices }}
+
+:root {
+  --encre: #141414;
+  --gris: #5b5b5b;
+  --filet: #1d1d1d;
+  --accent: #9e1b1b;
+  --fond-encart: #f3efe6;
+}
+@page { size: A4; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  color: var(--encre);
+  font-family: 'Texte', Georgia, serif;
+  font-size: 9.6pt;
+  line-height: 1.42;
+  font-kerning: normal;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+p { margin: 0 0 0.55em 0; }
+sup { font-family: 'Labels', Arial, sans-serif; font-size: 0.62em; color: var(--accent); font-weight: 600; line-height: 0; margin-left: 1px; }
+
+/* En-tête */
+.bandeau {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: 'Labels', Arial, sans-serif; font-weight: 600; font-size: 7.2pt;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  border-bottom: 0.6pt solid var(--filet); padding-bottom: 3pt;
+}
+.titre-journal {
+  font-family: 'Masthead', 'Old English Text MT', serif;
+  font-size: 58pt; line-height: 1; text-align: center; margin: 7pt 0 2pt 0;
+  letter-spacing: 0.01em;
+}
+.devise {
+  text-align: center; font-family: 'Titrage', Georgia, serif; font-style: italic;
+  font-size: 9.5pt; color: var(--gris); margin-bottom: 6pt;
+}
+.double-filet { border-top: 2.2pt solid var(--filet); border-bottom: 0.6pt solid var(--filet); height: 4.5pt; margin-bottom: 12pt; }
+
+.etiquette {
+  font-family: 'Labels', Arial, sans-serif; font-weight: 800; font-size: 7.4pt;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
+}
+
+/* La une */
+.une h1 {
+  font-family: 'Titrage', Georgia, serif; font-weight: 900; font-size: 27pt; line-height: 1.08;
+  margin: 4pt 0 7pt 0; letter-spacing: -0.01em;
+}
+.chapo {
+  font-family: 'Titrage', Georgia, serif; font-style: italic; font-size: 12.2pt; line-height: 1.38;
+  margin: 0 0 10pt 0; color: #2a2a2a; text-align: left;
+}
+.une-grille { display: flex; gap: 16pt; align-items: flex-start; }
+.corps-une { flex: 1 1 auto; column-count: 2; column-gap: 16pt; column-rule: 0.5pt solid #bdbdbd; }
+.corps-une p:first-child::first-letter {
+  font-family: 'Titrage', Georgia, serif; font-weight: 900; float: left;
+  font-size: 37pt; line-height: 0.82; padding: 3pt 4pt 0 0; color: var(--accent);
+}
+.sans-une { font-style: italic; color: var(--gris); border: 0.6pt solid #bdbdbd; padding: 10pt; }
+
+.separateur { border-top: 1.4pt solid var(--filet); margin: 14pt 0 3pt 0; }
+.separateur-fin { border-top: 0.5pt solid var(--filet); margin-bottom: 9pt; }
+.titre-section {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: 'Titrage', Georgia, serif; font-weight: 900; font-size: 15pt; margin-bottom: 4pt;
+}
+.titre-section .etiquette { font-size: 6.8pt; color: var(--gris); }
+
+/* En bref */
+.breves { column-count: 3; column-gap: 14pt; column-rule: 0.5pt solid #bdbdbd; }
+.rubrique { margin-bottom: 7pt; }
+.rubrique > .etiquette { display: block; border-bottom: 0.5pt solid var(--accent); padding-bottom: 2pt; margin-bottom: 4pt; break-after: avoid; }
+.breve { break-inside: avoid; margin-bottom: 6pt; }
+.breve h3 { break-after: avoid; font-family: 'Titrage', Georgia, serif; font-weight: 700; font-size: 10.6pt; line-height: 1.2; margin: 0 0 2pt 0; }
+.breve p { margin: 0; }
+.signature { font-family: 'Labels', Arial, sans-serif; font-size: 6.8pt; font-weight: 600; color: var(--gris); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.notion {
+  flex: 0 0 30%; background: var(--fond-encart); border-top: 3pt solid var(--accent);
+  padding: 9pt 10pt 10pt 10pt; break-inside: avoid;
+}
+.notion h2 { font-family: 'Titrage', Georgia, serif; font-weight: 900; font-size: 15pt; line-height: 1.12; margin: 4pt 0 6pt 0; }
+.notion p { font-size: 9.4pt; text-align: left; }
+
+/* Sources */
+.sources { margin-top: 14pt; border-top: 0.6pt solid var(--filet); padding-top: 5pt; break-inside: avoid; }
+.sources ol { column-count: 2; column-gap: 14pt; margin: 4pt 0 0 0; padding-left: 13pt; font-size: 7pt; line-height: 1.35; color: #333; }
+.sources li { break-inside: avoid; margin-bottom: 2pt; }
+.sources li::marker { font-family: 'Labels', Arial, sans-serif; font-weight: 800; color: var(--accent); }
+.sources a { color: var(--gris); text-decoration: none; overflow-wrap: anywhere; }
+.colophon { margin-top: 8pt; font-size: 7pt; color: var(--gris); font-style: italic; text-align: left; }
+</style>
+</head>
+<body>
+
+{% macro encart_notion() %}{% if j.notion %}
+<aside class="notion">
+  <div class="etiquette">La notion du jour</div>
+  <h2>{{ j.notion.titre|typo }}</h2>
+  <p>{{ j.notion.explication|typo }}</p>
+  <div class="signature">Inspirée par {{ j.notion.source.source }}<sup>{{ num[j.notion.source.id] }}</sup></div>
+</aside>
+{% endif %}{% endmacro %}
+
+<header>
+  <div class="bandeau">
+    <span>Édition du matin</span>
+    <span>N° {{ numero }}</span>
+    <span>{{ date_longue }}</span>
+  </div>
+  <div class="titre-journal">{{ nom }}</div>
+  <div class="devise">Le quotidien de la cybersécurité · chaque information renvoie à sa source</div>
+  <div class="double-filet"></div>
+</header>
+
+<section class="une">
+  <div class="etiquette">À la une</div>
+  {% if j.une %}
+    <h1>{{ j.une.titre|typo }}</h1>
+    <p class="chapo">{{ j.une.chapo|typo }}</p>
+    <div class="une-grille">
+      <div class="corps-une">
+        {% for p in j.une.paragraphes %}<p>{{ avec_appels(p) }}</p>{% endfor %}
+      </div>
+      {{ encart_notion() }}
+    </div>
+  {% else %}
+    <p class="sans-une">Pas de une aujourd'hui : l'article proposé n'a pas passé la vérification des sources. Les brèves ci-dessous, elles, l'ont passée.</p>
+    <div class="une-grille">{{ encart_notion() }}</div>
+  {% endif %}
+</section>
+
+<div class="separateur"></div>
+<div class="titre-section"><span>En bref</span><span class="etiquette">{{ j.breves|length }} brèves</span></div>
+<div class="separateur-fin"></div>
+
+<div class="breves">
+    {% for rubrique, breves in rubriques %}
+    <div class="rubrique">
+      <span class="etiquette">{{ rubrique }}</span>
+      {% for b in breves %}
+      <div class="breve">
+        <h3>{{ b.titre|typo }}</h3>
+        <p>{{ b.texte|typo }} <span class="signature">— {{ b.source.source }}</span><sup>{{ num[b.source.id] }}</sup></p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p><em>Aucune brève vérifiée aujourd'hui.</em></p>
+    {% endfor %}
+</div>
+
+<section class="sources">
+  <div class="etiquette">Sources</div>
+  <ol>
+    {% for a in sources %}
+    <li><strong>{{ a.source }}</strong>, {{ a.titre }}. <a href="{{ a.lien }}">{{ a.lien|lien_court }}</a></li>
+    {% endfor %}
+  </ol>
+  <p class="colophon">
+    Rédigé par un agent IA à partir de {{ nb_sources }} sources suivies, puis vérifié par du code : chaque source citée existe, chaque CVE et chaque grand nombre figurent dans l'article d'origine.
+    {% if j.ecartes %}Éléments écartés à la vérification : {{ j.ecartes|length }}.{% endif %}
+    {% if sources_en_echec %}Sources injoignables ce matin : {{ sources_en_echec|join(", ") }}.{% endif %}
+  </p>
+</section>
+
+</body>
+</html>

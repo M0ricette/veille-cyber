@@ -1,47 +1,56 @@
-# Veille cyber
+# Le Veilleur
 
-Un agent qui lit chaque matin des sources cyber choisies à l'avance et m'envoie une newsletter courte : les points qui comptent, un lien vers chaque source et une notion à apprendre.
+Un agent IA qui lit chaque matin une dizaine de sources cyber et m'envoie un journal en PDF : un article de une développé, des brèves classées par rubrique et une notion à apprendre. Chaque information renvoie à sa source, et c'est du code, pas le modèle, qui le vérifie.
 
-Le projet a deux objectifs. Me former au quotidien, et montrer comment on construit un agent LLM qui reste fiable : il n'écrit que ce qu'il peut sourcer, et c'est du code, pas le modèle, qui le vérifie.
+Le projet a deux objectifs. Me former au quotidien sur l'actualité technique, les fuites, la géopolitique et la régulation. Et montrer comment on construit un agent LLM qui reste fiable et sûr.
+
+## Ce qu'est un agent, ici
+
+Un LLM seul reçoit du texte et rend du texte. Un agent, c'est le même modèle placé dans une boucle avec des outils : il demande à utiliser un outil, le code l'exécute et lui renvoie le résultat, et il décide de la suite.
+
+Le Veilleur ne donne de l'autonomie qu'à l'étape qui demande du jugement. La collecte est du code fixe. La rédaction est un agent, le rédacteur en chef. La vérification est du code fixe.
 
 ## Architecture
 
 ```mermaid
-flowchart LR
-    A[Flux RSS CERT-FR] --> B[sources.py<br/>récupère, nettoie, filtre 24 h]
-    B --> C[redaction.py<br/>prompt balisé]
-    C --> D[llm.py<br/>appel au modèle]
-    D --> E[redaction.py<br/>vérification déterministe]
-    E -->|points sourcés| F[newsletter.py<br/>HTML + texte]
-    E -->|points rejetés| L[logs]
-    F --> G[mailer.py<br/>SMTP chiffré]
+flowchart TD
+    A[sources.yaml<br/>10 flux RSS] --> B[collecte.py<br/>code fixe : lit, nettoie, dédoublonne]
+    B --> C[Catalogue du jour<br/>S1, S2, S3…]
+    C --> D{Agent rédacteur en chef<br/>agent.py}
+    D -- lire_article S4 --> E[lecture.py<br/>texte complet]
+    E -- contenu non fiable --> D
+    D -- publier_journal --> F[verification.py<br/>code fixe]
+    F -- problèmes --> D
+    F -- journal vérifié --> G[journal.py<br/>maquette et PDF]
+    G --> H[mailer.py<br/>mail avec PDF joint]
 ```
 
-Le pipeline est linéaire : récupérer, rédiger, vérifier, envoyer. Chaque étape est un module qui fait une seule chose.
+L'agent dispose de deux outils. `lire_article` lui donne le texte complet d'un article du catalogue. `publier_journal` lui sert à rendre le journal. Si la vérification échoue, l'outil lui renvoie la liste des problèmes et il peut corriger, deux fois au plus. Après, on ne garde que ce qui a passé le contrôle.
 
 ## Comment l'agent évite d'inventer
 
-Le modèle reçoit uniquement le texte des articles du jour, chacun avec un identifiant court comme `A1`. Il doit rattacher chaque point à un identifiant.
+L'agent ne cite les sources que par identifiant, comme `S4`. Les liens sont ajoutés par le code à partir du flux, donc un lien inventé est impossible.
 
-Après sa réponse, le code vérifie trois choses. L'identifiant cité doit exister. Chaque numéro de CVE mentionné doit figurer dans l'article cité. Les liens ne viennent jamais du modèle : ils sont repris du flux à partir de l'identifiant, donc un lien inventé est impossible.
+Avant publication, le code vérifie que chaque identifiant cité existe, que la une s'appuie sur au moins un article lu en entier et que chaque paragraphe de la une cite une source. Il vérifie aussi que chaque numéro de CVE et chaque grand nombre figurent dans les sources citées. Un « 4 500 000 victimes » absent de l'article est rejeté.
 
-Un point qui échoue est retiré et journalisé. La newsletter indique combien de points ont été écartés.
+## Sécurité de l'agent
 
-## Sécurité
+Le contenu des flux et des pages est traité comme une entrée non fiable, car n'importe qui peut écrire dans un article.
 
-Le contenu des flux est traité comme une entrée non fiable.
+L'agent ne choisit jamais une URL. Il choisit un identifiant du catalogue, et le code visite le lien correspondant. Une page piégée ne peut donc pas le faire naviguer ailleurs. Le texte lu lui est rendu dans une balise `<contenu_non_fiable>`, et le prompt système précise que ce contenu n'est jamais une consigne.
 
-Contre l'injection de prompt, les articles sont encadrés par des balises `<article>` et le prompt système précise que leur contenu est une donnée, jamais une consigne. L'agent n'a aucun outil à sa disposition : même une injection réussie ne pourrait que modifier le texte, et ce texte passe ensuite par la vérification.
+Ses capacités sont bornées : deux outils, six lectures, dix tours, et une publication forcée au dernier tour. Les téléchargements ont un délai et une taille maximale. Le HTML est échappé avant la mise en page, les liens non `http` sont rejetés dès la collecte, et les secrets restent dans `.env`.
 
-Côté mail, le HTML est échappé automatiquement par Jinja2, et les liens non `http` sont rejetés dès la lecture du flux. Les secrets restent dans `.env`, exclu du dépôt. L'envoi passe par SMTP sur TLS.
+Chaque décision de l'agent est enregistrée dans `logs/trace-AAAA-MM-JJ.json` pour pouvoir relire son raisonnement.
 
 ## Installation
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate          # sous Windows : .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env    # puis remplir la clé API et le compte SMTP
+playwright install chromium        # moteur utilisé pour produire le PDF
+cp .env.example .env               # puis remplir la clé API et le compte mail
 ```
 
 Pour Gmail, il faut un mot de passe d'application, le mot de passe du compte est refusé.
@@ -49,21 +58,20 @@ Pour Gmail, il faut un mot de passe d'application, le mot de passe du compte est
 ## Utilisation
 
 ```bash
-python -m veille.main --dry-run    # écrit la newsletter dans out/ sans l'envoyer
-python -m veille.main              # envoie la newsletter
-python -m pytest                   # lance les tests
+python -m veille.main --dry-run    # produit le PDF dans out/ sans l'envoyer
+python -m veille.main              # envoie le journal par mail
+python -m pytest                   # 21 tests, sans réseau ni clé API
 ```
 
-L'option `--feed` accepte un fichier local, utile pour tester sans réseau :
-`python -m veille.main --dry-run --feed tests/fixtures/flux_test.xml --window 9999`
+Pour ajouter une source, il suffit d'une entrée dans `sources.yaml`. Une source en panne est ignorée et signalée en bas du journal.
 
 ## Feuille de route
 
-- [x] Étape 1 : une source, un récap sourcé et vérifié, envoi par mail
-- [ ] Étape 2 : mémoire SQLite des articles déjà traités et des notions déjà vues
-- [ ] Étape 3 : notions sourcées par RAG sur les guides de l'ANSSI, progression de difficulté
-- [ ] Étape 4 : plusieurs sources, score de pertinence, graphe avec relance
-- [ ] Étape 5 : boucle de retour sur la notion et quiz du lendemain
-- [ ] Étape 6 : exécution planifiée chaque matin
+- [x] Récap sourcé et vérifié d'une source, envoi par mail
+- [x] Agent rédacteur en chef, dix sources, journal PDF
+- [ ] Mémoire SQLite des articles déjà traités et des notions déjà vues
+- [ ] Notions sourcées par RAG sur les guides de l'ANSSI, progression de difficulté
+- [ ] Retour sur la notion du jour et quiz du lendemain
+- [ ] Exécution planifiée chaque matin
 
 Les choix techniques et leurs alternatives sont détaillés dans [DECISIONS.md](DECISIONS.md).

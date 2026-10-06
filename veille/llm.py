@@ -1,24 +1,32 @@
 """Unique point de contact avec le modèle de langage.
 
-Tout le reste du code appelle complete() et ignore quel fournisseur est derrière.
-Passer à un autre fournisseur ou à un modèle local via Ollama ne touche que ce fichier.
+L'agent appelle appeler() et ne connaît pas le SDK. Changer de fournisseur
+demande d'adapter ce fichier, notamment le format des appels d'outils.
 """
 import logging
 
 import anthropic
 
 log = logging.getLogger(__name__)
+_client: anthropic.Anthropic | None = None
 
 
-def complete(system: str, user: str, model: str, max_tokens: int = 2000) -> str:
-    # Le SDK relance seul les erreurs réseau, 429 et 5xx avec un délai croissant.
-    client = anthropic.Anthropic(max_retries=3, timeout=60)  # lit ANTHROPIC_API_KEY
-    response = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=system,
-        messages=[{"role": "user", "content": user}],
+def _get_client() -> anthropic.Anthropic:
+    global _client
+    if _client is None:
+        # Le SDK relance seul les erreurs réseau, 429 et 5xx avec un délai croissant.
+        _client = anthropic.Anthropic(max_retries=3, timeout=120)  # lit ANTHROPIC_API_KEY
+    return _client
+
+
+def appeler(system: str, messages: list, outils: list, modele: str,
+            outil_force: str | None = None, max_tokens: int = 8000):
+    """Un tour de conversation. Renvoie la réponse brute : texte et demandes d'outils."""
+    choix = {"type": "tool", "name": outil_force} if outil_force else {"type": "auto"}
+    reponse = _get_client().messages.create(
+        model=modele, max_tokens=max_tokens, system=system,
+        messages=messages, tools=outils, tool_choice=choix,
     )
-    log.info("LLM : %d tokens en entrée, %d en sortie",
-             response.usage.input_tokens, response.usage.output_tokens)
-    return "".join(block.text for block in response.content if block.type == "text")
+    log.info("LLM : %d tokens en entrée, %d en sortie, arrêt %s",
+             reponse.usage.input_tokens, reponse.usage.output_tokens, reponse.stop_reason)
+    return reponse

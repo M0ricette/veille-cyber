@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Flux de TEST. Contenu fictif. -->
+<rss version="2.0"><channel><title>Source A</title>
+<item><title>Fuite chez ExempleTelecom : 3,000,000 clients touchés</title>
+<link>https://a.example/fuite</link><pubDate>Tue, 06 Oct 2026 07:00:00 +0000</pubDate>
+<description>&lt;p&gt;Un pirate revendique la fuite de 3,000,000 fiches clients. La faille CVE-2026-11111 serait en cause.&lt;/p&gt;</description></item>
+<item><title>Doublon présent dans les deux flux</title>
+<link>https://commun.example/doublon</link><pubDate>Tue, 06 Oct 2026 06:00:00 +0000</pubDate>
+<description>Même article relayé par deux sources.</description></item>
+<item><title>Lien piégé</title><link>javascript:alert(1)</link>
+<pubDate>Tue, 06 Oct 2026 06:00:00 +0000</pubDate><description>Ne doit jamais apparaître.</description></item>
+<item><title>Trop ancien</title><link>https://a.example/vieux</link>
+<pubDate>Mon, 28 Sep 2026 10:00:00 +0000</pubDate><description>Hors fenêtre.</description></item>
+</channel></rss>

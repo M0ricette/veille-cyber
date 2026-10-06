@@ -1,0 +1,50 @@
+# Sources lues chaque matin. Pour en ajouter une, il suffit d'une entrée ici.
+# rubrique : indication donnée à l'agent, qui reste libre de classer autrement.
+# Une source en panne est ignorée et notée dans les logs, le journal sort quand même.
+
+sources:
+  # Institutions françaises
+  - nom: CERT-FR
+    url: https://cert.ssi.gouv.fr/feed/
+    rubrique: Menaces et failles
+    langue: fr
+  - nom: ANSSI
+    url: https://cyber.gouv.fr/actualites/rss/
+    rubrique: Géopolitique et régulation
+    langue: fr
+
+  # Presse française
+  - nom: ZATAZ
+    url: https://www.zataz.com/feed/
+    rubrique: Fuites et attaques
+    langue: fr
+  - nom: Numerama Cyberguerre
+    url: https://www.numerama.com/cyberguerre/feed/
+    rubrique: Géopolitique et régulation
+    langue: fr
+  - nom: Le Monde Pixels
+    url: https://www.lemonde.fr/pixels/rss_full.xml
+    rubrique: Écosystème
+    langue: fr
+  - nom: IT-Connect
+    url: https://www.it-connect.fr/feed/
+    rubrique: Menaces et failles
+    langue: fr
+
+  # Presse internationale
+  - nom: The Record
+    url: https://therecord.media/feed
+    rubrique: Géopolitique et régulation
+    langue: en
+  - nom: BleepingComputer
+    url: https://www.bleepingcomputer.com/feed/
+    rubrique: Fuites et attaques
+    langue: en
+  - nom: The Hacker News
+    url: https://feeds.feedburner.com/TheHackersNews
+    rubrique: Menaces et failles
+    langue: en
+  - nom: Krebs on Security
+    url: https://krebsonsecurity.com/feed/
+    rubrique: Fuites et attaques
+    langue: en
