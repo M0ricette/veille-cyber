@@ -124,6 +124,24 @@ Chaque choix tient en trois lignes : ce qui a été choisi, l'alternative écart
 **Alternative.** Supprimer la base à chaque évolution.
 **Pourquoi.** La mémoire a de la valeur parce qu'elle s'accumule. Une évolution du code ne doit jamais effacer des semaines de progression.
 
+## Exécution sur GitHub Actions
+
+**Choix.** Un workflow planifié qui lance une édition chaque matin.
+**Alternative.** Le Planificateur de tâches Windows, ou un petit serveur allumé en permanence.
+**Pourquoi.** L'agent ne tourne que quelques minutes par jour : louer ou laisser allumer une machine n'a pas de sens. GitHub fournit la machine gratuitement à ce volume, et l'historique des exécutions est visible dans le dépôt. Le Planificateur Windows reste documenté en secours.
+
+## La mémoire sur une branche dédiée
+
+**Choix.** La base SQLite est poussée sur une branche `memoire` à la fin de chaque édition réussie.
+**Alternative.** Le cache de GitHub Actions, ou un commit quotidien sur la branche principale.
+**Pourquoi.** Le cache peut être effacé sans prévenir, ce qui ferait perdre la progression. Un commit par jour sur la branche principale noierait l'historique du code. Si le dépôt est injoignable, le script s'arrête au lieu de repartir d'une mémoire vide.
+
+## Moindre privilège pour le workflow
+
+**Choix.** Le jeton du workflow n'a que le droit d'écrire dans le dépôt, les secrets passent par GitHub Secrets, et aucune adresse n'apparaît dans les logs.
+**Alternative.** Les permissions par défaut et des logs détaillés.
+**Pourquoi.** Sur un dépôt public, les logs d'exécution sont visibles de tous. GitHub masque les secrets, mais le plus sûr reste de ne jamais les écrire.
+
 ## SMTP plutôt qu'un service d'emailing
 
 **Choix.** `smtplib` en SSL avec un compte Gmail, le journal en pièce jointe.

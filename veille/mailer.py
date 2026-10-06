@@ -29,4 +29,4 @@ def envoyer(cfg: Config, objet: str, texte: str, pdf: Path) -> None:
     with smtplib.SMTP_SSL(cfg.smtp_host, cfg.smtp_port, context=ssl.create_default_context()) as smtp:
         smtp.login(cfg.smtp_user, cfg.smtp_password)
         smtp.send_message(msg)
-    log.info("Journal envoyé à %s", cfg.mail_to)
+    log.info("Journal envoyé")  # pas d'adresse dans les logs : ils peuvent être publics sur GitHub

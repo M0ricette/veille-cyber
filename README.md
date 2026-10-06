@@ -1,5 +1,7 @@
 # Le Veilleur
 
+![Tests](https://github.com/TON_COMPTE/veille-cyber/actions/workflows/tests.yml/badge.svg)
+
 Un agent IA qui lit chaque matin une dizaine de sources cyber et m'envoie un journal en PDF : un article de une développé, des brèves classées par rubrique, une notion à apprendre et un rappel des notions passées. Chaque information renvoie à sa source, et c'est du code, pas le modèle, qui le vérifie.
 
 Le projet a deux objectifs. Me former au quotidien sur l'actualité technique, les fuites, la géopolitique et la régulation. Et montrer comment on construit un agent LLM qui reste fiable et sûr.
@@ -79,6 +81,30 @@ python -m pytest                   # 34 tests, sans réseau ni clé API
 
 Pour ajouter une source, il suffit d'une entrée dans `sources.yaml`. Une source en panne est ignorée et signalée en bas du journal.
 
+## Exécution automatique
+
+L'agent ne tourne pas en continu. Il se lance chaque matin, travaille quelques minutes, envoie le journal et s'arrête.
+
+### Dans le cloud, avec GitHub Actions
+
+C'est le mode par défaut : aucun ordinateur n'a besoin d'être allumé. Le workflow `.github/workflows/veilleur.yml` se déclenche vers 6 h 30 l'été et 5 h 30 l'hiver, heure de Paris.
+
+1. Pousser le dépôt sur GitHub.
+2. Dans *Settings > Secrets and variables > Actions*, créer les secrets `ANTHROPIC_API_KEY`, `SMTP_USER`, `SMTP_PASSWORD` et `MAIL_TO`.
+3. Dans l'onglet *Actions*, ouvrir *Le Veilleur* et cliquer sur *Run workflow* pour une première édition.
+
+Chaque exécution démarre sur une machine vierge. Le script `scripts/memoire_git.sh` récupère donc la base SQLite depuis la branche `memoire` au début, et l'y repousse après un envoi réussi. Le PDF et la trace de l'agent restent téléchargeables deux semaines dans l'onglet *Actions*.
+
+Le workflow `tests.yml` lance les tests à chaque push.
+
+### Sur un PC Windows, en secours
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\installer_tache_windows.ps1
+```
+
+La tâche se lance à 7 h. Elle sort le PC de veille, et s'il était éteint, l'édition part dès l'allumage. Il ne faut pas activer les deux modes à la fois : on recevrait deux journaux, et chaque lanceur aurait sa propre mémoire.
+
 ## Feuille de route
 
 - [x] Récap sourcé et vérifié d'une source, envoi par mail
@@ -86,7 +112,7 @@ Pour ajouter une source, il suffit d'une entrée dans `sources.yaml`. Une source
 - [x] Mémoire SQLite des articles publiés, des notions vues et de la progression
 - [ ] Notions sourcées par RAG sur les guides de l'ANSSI, progression de difficulté
 - [x] Rappel espacé des notions à 1, 3 et 7 éditions
+- [x] Exécution quotidienne sur GitHub Actions, mémoire persistée sur une branche
 - [ ] Retour sur la notion du jour pour ajuster le niveau
-- [ ] Exécution planifiée chaque matin
 
 Les choix techniques et leurs alternatives sont détaillés dans [DECISIONS.md](DECISIONS.md).

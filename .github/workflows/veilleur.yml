@@ -1,0 +1,66 @@
+name: Le Veilleur
+
+on:
+  schedule:
+    # 4 h 30 UTC : 6 h 30 à Paris en été, 5 h 30 en hiver.
+    # GitHub peut décaler le départ de quelques minutes aux heures chargées.
+    - cron: "30 4 * * *"
+  workflow_dispatch:   # bouton « Run workflow » pour lancer une édition à la main
+
+permissions:
+  contents: write      # seul droit accordé : pousser la mémoire sur la branche memoire
+
+concurrency:
+  group: veilleur      # jamais deux éditions en même temps sur la même mémoire
+  cancel-in-progress: false
+
+jobs:
+  edition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Europe/Paris
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Récupérer la mémoire
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/memoire_git.sh recuperer
+
+      - name: Publier l'édition du jour
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          LLM_MODEL: ${{ vars.LLM_MODEL || 'claude-haiku-4-5-20251001' }}
+        run: python -m veille.main
+
+      # Seulement si l'édition est partie : un échec ne doit rien enregistrer.
+      - name: Sauvegarder la mémoire
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/memoire_git.sh sauvegarder
+
+      # Le PDF et la trace de l'agent restent téléchargeables deux semaines, même en cas d'échec.
+      - name: Conserver le PDF et la trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edition-${{ github.run_id }}
+          path: |
+            out/*.pdf
+            logs/
+          retention-days: 14
+          if-no-files-found: ignore
