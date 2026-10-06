@@ -12,7 +12,7 @@ JOURNAL_OK = {
             "paragraphes": ["Un pirate revendique 3 000 000 fiches [S1].", "La faille CVE-2026-11111 serait en cause [S1]."],
             "sources": ["S1"]},
     "breves": [{"rubrique": "Géopolitique et régulation", "titre": "Sanctions", "texte": "L'UE vise six individus.", "source": "S3"}],
-    "notion": {"titre": "Le smishing", "explication": "Une arnaque par SMS.", "source": "S1"},
+    "notion": {"titre": "Le smishing", "explication": "Une arnaque par SMS.", "source": "S1", "niveau": 1},
 }
 
 
@@ -92,3 +92,18 @@ def test_apres_deux_corrections_on_garde_ce_qui_est_valide(catalogue):
     journal, _ = lancer_agent(catalogue, "test", modele, lire)
     assert journal.une is None
     assert len(journal.breves) == 1
+
+
+def test_notion_deja_vue_refusee_puis_corrigee(catalogue):
+    nouvelle = {**JOURNAL_OK, "notion": {**JOURNAL_OK["notion"], "titre": "La fuite de données", "niveau": 2}}
+    modele = FauxModele([
+        [appel("lire_article", {"id": "S1"}, 1)],
+        [appel("publier_journal", JOURNAL_OK, 2)],      # le smishing a déjà été expliqué
+        [appel("publier_journal", nouvelle, 3)],
+    ])
+    journal, _ = lancer_agent(catalogue, "test", modele, lire,
+                              notions_vues=[("Le Smishing", 1)], niveau_cible=2)
+    assert journal.notion.titre == "La fuite de données" and journal.notion.niveau == 2
+    # La mémoire est bien donnée à l'agent dès le premier message.
+    premier = modele.recus[0]["messages"][0]["content"]
+    assert "<memoire>" in premier and "Le Smishing" in premier and "2 sur 4" in premier

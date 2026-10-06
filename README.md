@@ -16,6 +16,8 @@ Le Veilleur ne donne de l'autonomie qu'à l'étape qui demande du jugement. La c
 flowchart TD
     A[sources.yaml<br/>10 flux RSS] --> B[collecte.py<br/>code fixe : lit, nettoie, dédoublonne]
     B --> C[Catalogue du jour<br/>S1, S2, S3…]
+    M[(memoire.py<br/>SQLite)] -- liens déjà publiés --> B
+    M -- notions vues et niveau visé --> D
     C --> D{Agent rédacteur en chef<br/>agent.py}
     D -- lire_article S4 --> E[lecture.py<br/>texte complet]
     E -- contenu non fiable --> D
@@ -23,9 +25,20 @@ flowchart TD
     F -- problèmes --> D
     F -- journal vérifié --> G[journal.py<br/>maquette et PDF]
     G --> H[mailer.py<br/>mail avec PDF joint]
+    H -- après envoi réussi --> M
 ```
 
 L'agent dispose de deux outils. `lire_article` lui donne le texte complet d'un article du catalogue. `publier_journal` lui sert à rendre le journal. Si la vérification échoue, l'outil lui renvoie la liste des problèmes et il peut corriger, deux fois au plus. Après, on ne garde que ce qui a passé le contrôle.
+
+## La mémoire
+
+Le modèle ne retient rien d'un appel à l'autre. Pendant une exécution, sa mémoire courte est l'historique de la conversation, que la boucle lui renvoie à chaque tour. D'un matin à l'autre, c'est une base SQLite dans `data/veilleur.db` qui prend le relais.
+
+Elle garde les articles déjà publiés, les notions déjà expliquées avec leur niveau, et les éditions. Elle sert à trois moments. Avant l'agent, le code retire du catalogue tout article déjà publié. Au démarrage de l'agent, il reçoit la liste des notions vues et le niveau visé, qui monte d'un cran toutes les dix notions. À la vérification, une notion trop proche d'une notion déjà vue est refusée et l'agent doit en choisir une autre.
+
+Rien n'est mémorisé en mode `--dry-run`, ni si l'envoi du mail échoue. On ne stocke que des données validées par le code, jamais le texte des articles : sinon une injection cachée dans une page reviendrait dans le prompt tous les jours suivants.
+
+`python -m veille.memoire` affiche ce que l'agent a retenu.
 
 ## Comment l'agent évite d'inventer
 
@@ -60,7 +73,8 @@ Pour Gmail, il faut un mot de passe d'application, le mot de passe du compte est
 ```bash
 python -m veille.main --dry-run    # produit le PDF dans out/ sans l'envoyer
 python -m veille.main              # envoie le journal par mail
-python -m pytest                   # 21 tests, sans réseau ni clé API
+python -m veille.memoire           # affiche les notions vues et le niveau actuel
+python -m pytest                   # 29 tests, sans réseau ni clé API
 ```
 
 Pour ajouter une source, il suffit d'une entrée dans `sources.yaml`. Une source en panne est ignorée et signalée en bas du journal.
@@ -69,7 +83,7 @@ Pour ajouter une source, il suffit d'une entrée dans `sources.yaml`. Une source
 
 - [x] Récap sourcé et vérifié d'une source, envoi par mail
 - [x] Agent rédacteur en chef, dix sources, journal PDF
-- [ ] Mémoire SQLite des articles déjà traités et des notions déjà vues
+- [x] Mémoire SQLite des articles publiés, des notions vues et de la progression
 - [ ] Notions sourcées par RAG sur les guides de l'ANSSI, progression de difficulté
 - [ ] Retour sur la notion du jour et quiz du lendemain
 - [ ] Exécution planifiée chaque matin

@@ -35,7 +35,11 @@ Ta méthode :
 Le journal contient :
 - La une : un titre, un chapô de deux phrases, puis 4 à 6 paragraphes. Raconte ce qui s'est passé, pourquoi c'est important, quels sont les enjeux et ce qu'il faut en retenir. Chaque paragraphe se termine par ses sources entre crochets, par exemple [S3] ou [S3][S7].
 - Les brèves : 4 à 8 faits courts sur d'autres sujets, deux ou trois phrases chacune, une source par brève. Varie les rubriques.
-- La notion du jour : une notion de cyber qui aide à comprendre l'actualité du jour, expliquée simplement en 4 à 6 phrases, comme à un collègue curieux.
+- La notion du jour : une notion de cyber qui aide à comprendre l'actualité du jour, expliquée simplement en 4 à 6 phrases, comme à un collègue curieux. Elle doit être nouvelle : la liste des notions déjà expliquées est dans le bloc <memoire>. Vise le niveau indiqué :
+  1. Fondamentaux : ce que c'est et à quoi ça sert, par exemple le chiffrement ou le phishing.
+  2. Mécanismes : comment fonctionne une attaque ou une défense, par exemple le XSS ou la MFA.
+  3. Approfondissement : techniques et architectures, par exemple le Kerberoasting ou le zero trust.
+  4. Expert : sujets pointus, par exemple les attaques par canal auxiliaire.
 - Une accroche d'une phrase qui servira d'objet au mail.
 
 Règles absolues :
@@ -94,8 +98,9 @@ OUTILS = [
                         "titre": {"type": "string"},
                         "explication": {"type": "string"},
                         "source": {"type": "string"},
+                        "niveau": {"type": "integer", "enum": [1, 2, 3, 4]},
                     },
-                    "required": ["titre", "explication", "source"],
+                    "required": ["titre", "explication", "source", "niveau"],
                 },
             },
             "required": ["accroche", "une", "breves", "notion"],
@@ -114,6 +119,13 @@ class Trace:
         log.info("Agent : %s", json.dumps(etape, ensure_ascii=False)[:300])
 
 
+def construire_memoire(notions_vues: list[tuple[str, int]], niveau_cible: int) -> str:
+    """Ce que l'agent doit savoir des éditions passées. Seulement des données validées par le code."""
+    vues = "\n".join(f"- {titre} · niveau {niveau}" for titre, niveau in notions_vues) or "- aucune pour l'instant"
+    return (f"<memoire>\nNiveau visé pour la notion du jour : {niveau_cible} sur 4.\n"
+            f"Notions déjà expliquées, à ne pas répéter :\n{vues}\n</memoire>")
+
+
 def construire_catalogue(articles: list[Article]) -> str:
     lignes = [
         f'<entree id="{a.id}" source="{a.source}" rubrique="{a.rubrique}" date="{a.publie:%Y-%m-%d}">\n'
@@ -130,12 +142,15 @@ def _resultat(id_appel: str, contenu: str, erreur: bool = False) -> dict:
 
 def lancer_agent(articles: list[Article], modele: str, appeler: Callable,
                  lire: Callable[[str], str] = lire_texte_complet,
-                 max_tours: int = 10, max_lectures: int = 6) -> tuple[Journal, Trace]:
+                 max_tours: int = 10, max_lectures: int = 6,
+                 notions_vues: list[tuple[str, int]] = (), niveau_cible: int = 1) -> tuple[Journal, Trace]:
     catalogue = {a.id: a for a in articles}
     lus: dict[str, str] = {}
     trace = Trace()
     corrections = 0
-    messages: list = [{"role": "user", "content": construire_catalogue(articles)}]
+    titres_vus = [titre for titre, _ in notions_vues]
+    messages: list = [{"role": "user", "content":
+                       construire_memoire(list(notions_vues), niveau_cible) + "\n\n" + construire_catalogue(articles)}]
 
     for tour in range(1, max_tours + 1):
         # Dernier tour : on oblige le modèle à publier, la boucle ne peut pas tourner sans fin.
@@ -177,7 +192,7 @@ def lancer_agent(articles: list[Article], modele: str, appeler: Callable,
                             "Page inaccessible. Appuie-toi sur le résumé du catalogue ou lis un autre article.", True))
 
             elif appel.name == "publier_journal":
-                journal, problemes = verifier(appel.input, catalogue, lus)
+                journal, problemes = verifier(appel.input, catalogue, lus, titres_vus, niveau_cible)
                 trace.ajouter(tour=tour, outil="publier_journal", problemes=problemes)
                 if not problemes or corrections >= MAX_CORRECTIONS or tour == max_tours:
                     # Après deux corrections, on garde seulement ce qui a passé la vérification.

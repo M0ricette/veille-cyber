@@ -105,7 +105,7 @@ sup { font-family: 'Labels', Arial, sans-serif; font-size: 0.62em; color: var(--
 
 {% macro encart_notion() %}{% if j.notion %}
 <aside class="notion">
-  <div class="etiquette">La notion du jour</div>
+  <div class="etiquette">La notion du jour · niveau {{ j.notion.niveau }} sur 4</div>
   <h2>{{ j.notion.titre|typo }}</h2>
   <p>{{ j.notion.explication|typo }}</p>
   <div class="signature">Inspirée par {{ j.notion.source.source }}<sup>{{ num[j.notion.source.id] }}</sup></div>

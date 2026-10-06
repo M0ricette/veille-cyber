@@ -47,9 +47,9 @@ def charger_sources(chemin: Path) -> list[Source]:
     return [Source(**s) for s in data["sources"]]
 
 
-def fenetre_heures(jour: date, base: int = 24) -> int:
-    """Le lundi, on couvre le week-end."""
-    return 72 if jour.weekday() == 0 else base
+def fenetre_heures(jour: date, base: int = 36) -> int:
+    """Le lundi, on couvre le week-end. La mémoire écarte ce qui a déjà été publié."""
+    return max(72, base) if jour.weekday() == 0 else base
 
 
 def _nettoyer(texte: str | None, limite: int) -> str:

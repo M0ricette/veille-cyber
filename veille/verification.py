@@ -7,12 +7,14 @@ Ce qui est vérifié :
 - chaque source citée existe dans le catalogue du jour ;
 - la une s'appuie sur au moins un article lu en entier ;
 - chaque paragraphe de la une cite au moins une source ;
-- chaque CVE et chaque grand nombre figure dans les sources citées.
+- chaque CVE et chaque grand nombre figure dans les sources citées ;
+- la notion du jour n'a pas déjà été expliquée.
 """
 import re
 from dataclasses import dataclass, field
 
 from .collecte import Article
+from .memoire import NIVEAU_MAX, nettoyer_titre, notion_deja_vue
 
 RUBRIQUES = ["Menaces et failles", "Fuites et attaques", "Géopolitique et régulation", "Écosystème"]
 
@@ -42,6 +44,7 @@ class Notion:
     titre: str
     explication: str
     source: Article
+    niveau: int
 
 
 @dataclass
@@ -79,7 +82,8 @@ def _texte_source(article: Article, lus: dict[str, str]) -> str:
     return " ".join([article.titre, article.resume, lus.get(article.id, "")])
 
 
-def verifier(data: dict, catalogue: dict[str, Article], lus: dict[str, str]) -> tuple[Journal, list[str]]:
+def verifier(data: dict, catalogue: dict[str, Article], lus: dict[str, str],
+             notions_vues: list[str] = (), niveau_cible: int = 1) -> tuple[Journal, list[str]]:
     """Renvoie le journal nettoyé et la liste des problèmes trouvés."""
     problemes: list[str] = []
 
@@ -136,8 +140,12 @@ def verifier(data: dict, catalogue: dict[str, Article], lus: dict[str, str]) -> 
             problemes.append(f"notion : source inconnue {n.get('source')}")
         elif manques := _non_sources(texte, tout):
             problemes.append(f"notion : éléments absents des sources {manques}")
+        elif deja := notion_deja_vue(str(n.get("titre", "")), list(notions_vues)):
+            problemes.append(f"notion : déjà expliquée lors d'une édition précédente, sous le titre {deja!r}. Choisis-en une autre")
         else:
-            notion = Notion(str(n.get("titre", "")), REF_RE.sub("", str(n.get("explication", ""))).strip(), article)
+            niveau = n.get("niveau") if n.get("niveau") in range(1, NIVEAU_MAX + 1) else niveau_cible
+            notion = Notion(nettoyer_titre(n.get("titre", "")),
+                            REF_RE.sub("", str(n.get("explication", ""))).strip(), article, niveau)
 
     accroche = str(data.get("accroche", "")).strip()
     if _non_sources(accroche, " ".join(_texte_source(a, lus) for a in catalogue.values())):

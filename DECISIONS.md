@@ -70,6 +70,42 @@ Chaque choix tient en trois lignes : ce qui a été choisi, l'alternative écart
 **Alternative.** WeasyPrint ou ReportLab.
 **Pourquoi.** Chromium gère bien les colonnes et la typographie, et s'installe en une commande sur Windows, macOS et Linux, là où WeasyPrint demande des bibliothèques système. Les polices embarquées donnent le même rendu partout, même hors ligne.
 
+## SQLite pour la mémoire
+
+**Choix.** Une base SQLite locale, trois tables.
+**Alternative.** Une base vectorielle comme Chroma, ou un simple fichier JSON.
+**Pourquoi.** On fait des recherches exactes : ce lien a-t-il été publié, combien de notions vues. SQLite le fait sans serveur, avec des transactions. Le JSON se corrompt si le script plante pendant l'écriture. Une base vectorielle n'apporterait rien tant qu'on ne cherche pas par le sens.
+
+## La mémoire est appliquée par le code
+
+**Choix.** Le code retire les articles déjà publiés avant que l'agent ne voie le catalogue, et la vérification refuse une notion déjà vue.
+**Alternative.** Donner à l'agent un outil pour consulter sa mémoire et le laisser juger.
+**Pourquoi.** Ne pas republier un article est une règle, pas un jugement. Une règle s'applique en code : c'est gratuit, certain et testable. L'agent ne reçoit que ce qui demande du discernement, le choix d'une notion nouvelle au bon niveau.
+
+## Ne mémoriser que du validé
+
+**Choix.** On stocke des liens, des titres de notions nettoyés et des numéros, jamais le texte des articles.
+**Alternative.** Stocker les résumés complets pour donner plus de contexte à l'agent.
+**Pourquoi.** Tout ce qui est en mémoire revient dans le prompt les jours suivants. Une injection cachée dans un article deviendrait persistante. Les titres de notions sont bornés à une ligne de 80 caractères avant stockage.
+
+## Enregistrer seulement après l'envoi
+
+**Choix.** L'édition est mémorisée dans une transaction, après l'envoi réussi du mail.
+**Alternative.** Mémoriser dès que l'agent a publié.
+**Pourquoi.** Si l'envoi échoue, les articles doivent rester disponibles pour le lendemain. La transaction garantit qu'on n'enregistre jamais une édition à moitié.
+
+## Doublons de notions : comparaison de texte, pas encore d'embeddings
+
+**Choix.** Titres normalisés puis comparés avec `difflib`, seuil de similarité à 85 %.
+**Alternative.** Comparer des embeddings dans une base vectorielle.
+**Pourquoi.** La comparaison de texte attrape « Le phishing » et « le Phishing ! », sans dépendance. Elle rate les synonymes comme phishing et hameçonnage. Quand la liste de notions grandira, ce sera le bon moment pour introduire des embeddings.
+
+## Progression de niveau par compteur
+
+**Choix.** Le niveau visé monte d'un cran toutes les dix notions, de 1 à 4.
+**Alternative.** Laisser l'agent juger mon niveau.
+**Pourquoi.** Une règle simple, prévisible et lisible dans la base. La boucle de retour remplacera ce compteur par mes vraies notes sur chaque notion.
+
 ## SMTP plutôt qu'un service d'emailing
 
 **Choix.** `smtplib` en SSL avec un compte Gmail, le journal en pièce jointe.

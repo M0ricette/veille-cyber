@@ -28,7 +28,7 @@ def test_catalogue_trie_et_numerote(catalogue):
 
 def test_le_lundi_couvre_le_week_end():
     assert fenetre_heures(date(2026, 10, 5)) == 72
-    assert fenetre_heures(date(2026, 10, 6)) == 24
+    assert fenetre_heures(date(2026, 10, 6)) == 36
 
 
 def test_lecture_garde_l_article_et_jette_le_menu():
