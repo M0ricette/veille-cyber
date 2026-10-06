@@ -12,7 +12,8 @@ def breve(texte, source="S3", rubrique="Géopolitique et régulation"):
 def test_journal_correct_accepte(catalogue):
     lus = {"S1": "Fuite de 3 000 000 fiches. CVE-2026-11111."}
     data = {"accroche": "Une fuite majeure", "une": une(["3 000 000 fiches ont fuité [S1].", "La faille CVE-2026-11111 est en cause [S1]."]),
-            "breves": [breve("L'UE vise six individus.")], "notion": {"titre": "Le credential stuffing", "explication": "Réutiliser des identifiants volés.", "source": "S1"}}
+            "breves": [breve("L'UE vise six individus.")], "notion": {"titre": "Le credential stuffing", "explication": "Réutiliser des identifiants volés.", "source": "S1",
+                       "essentiel": "Des identifiants volés sont testés en masse ailleurs."}}
     journal, problemes = verifier(data, {a.id: a for a in catalogue}, lus)
     assert problemes == []
     assert journal.une and len(journal.breves) == 1 and journal.notion
@@ -58,3 +59,9 @@ def test_source_inconnue_refusee(catalogue):
 def test_rubrique_inventee_remplacee_par_celle_de_la_source(catalogue):
     journal, _ = verifier({"breves": [breve("L'UE vise six individus.", rubrique="Divers")]}, {a.id: a for a in catalogue}, {})
     assert journal.breves[0].rubrique == "Géopolitique et régulation"
+
+
+def test_notion_sans_essentiel_refusee(catalogue):
+    notion = {"titre": "Le XSS", "explication": "Injection de script.", "source": "S1", "niveau": 1}
+    journal, problemes = verifier({"notion": notion}, {a.id: a for a in catalogue}, {})
+    assert journal.notion is None and "essentiel" in problemes[0]

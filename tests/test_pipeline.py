@@ -48,3 +48,5 @@ def test_deux_matins_de_suite(monkeypatch, tmp_path):
     m = main.Memoire(tmp_path / "m.db")
     assert m.numero_suivant(date(2026, 10, 9)) == 3
     assert [t for t, _ in m.notions_vues()] == ["Le smishing"]
+    # Le lendemain du jour 1, le smishing revient en rappel.
+    assert m.rappels(date(2026, 10, 8))[0]["titre"] == "Le smishing"

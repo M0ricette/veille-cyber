@@ -12,7 +12,8 @@ JOURNAL_OK = {
             "paragraphes": ["Un pirate revendique 3 000 000 fiches [S1].", "La faille CVE-2026-11111 serait en cause [S1]."],
             "sources": ["S1"]},
     "breves": [{"rubrique": "Géopolitique et régulation", "titre": "Sanctions", "texte": "L'UE vise six individus.", "source": "S3"}],
-    "notion": {"titre": "Le smishing", "explication": "Une arnaque par SMS.", "source": "S1", "niveau": 1},
+    "notion": {"titre": "Le smishing", "explication": "Une arnaque par SMS.", "source": "S1", "niveau": 1,
+               "essentiel": "Le smishing est un hameçonnage par SMS."},
 }
 
 

@@ -16,3 +16,10 @@ def test_rendu_echappe_le_html_et_numerote_les_sources(catalogue):
 
 def test_typographie_francaise():
     assert typo("3 000 000 clients : attention !") == "3 000 000 clients : attention !"
+
+
+def test_encadre_rappel_affiche(catalogue):
+    j = Journal("", None, [], None)
+    rappels = [{"titre": "Le smishing", "essentiel": "Hameçonnage par SMS.", "niveau": 1, "quand": "Hier"}]
+    html = render_html(j, date(2026, 10, 8), 2, "Le Veilleur", [], 3, rappels)
+    assert "Rappel" in html and "Le smishing" in html and "Hier" in html

@@ -106,6 +106,24 @@ Chaque choix tient en trois lignes : ce qui a été choisi, l'alternative écart
 **Alternative.** Laisser l'agent juger mon niveau.
 **Pourquoi.** Une règle simple, prévisible et lisible dans la base. La boucle de retour remplacera ce compteur par mes vraies notes sur chaque notion.
 
+## Rappel espacé plutôt que quiz
+
+**Choix.** Un encadré qui reprend l'idée clé des notions d'il y a 1, 3 et 7 éditions.
+**Alternative.** Un quiz sur la notion de la veille.
+**Pourquoi.** Revoir une notion à intervalles croissants la fixe mieux qu'un test unique le lendemain. Le rappel demande zéro effort à la lecture, donc il sera vraiment lu chaque matin.
+
+## L'idée clé est écrite une fois, puis relue par le code
+
+**Choix.** L'agent écrit l'essentiel de la notion en une phrase le jour même. Les jours suivants, le code relit cette phrase en base.
+**Alternative.** Demander chaque jour à l'agent de résumer les anciennes notions.
+**Pourquoi.** Le rappel ne coûte aucun appel au modèle et ne peut pas dériver d'un jour à l'autre. La phrase a passé la vérification au moment de sa création, puis elle est bornée à une ligne avant stockage.
+
+## Migration de schéma au démarrage
+
+**Choix.** À l'ouverture, la mémoire ajoute les colonnes manquantes d'une base créée par une version précédente.
+**Alternative.** Supprimer la base à chaque évolution.
+**Pourquoi.** La mémoire a de la valeur parce qu'elle s'accumule. Une évolution du code ne doit jamais effacer des semaines de progression.
+
 ## SMTP plutôt qu'un service d'emailing
 
 **Choix.** `smtplib` en SSL avec un compte Gmail, le journal en pièce jointe.

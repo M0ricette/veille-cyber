@@ -65,21 +65,23 @@ def run(dry_run: bool, heures: int | None) -> int:
     sortie = RACINE / "out"
     sortie.mkdir(exist_ok=True)
     nom_fichier = f"{cfg.nom_journal.replace(' ', '-')}-{jour.isoformat()}"
-    html = render_html(journal, jour, numero, cfg.nom_journal, echecs, len(sources))
+    # Mémoire 4 : les rappels sont lus en base par le code, sans appel au modèle.
+    rappels = memoire.rappels(jour)
+    html = render_html(journal, jour, numero, cfg.nom_journal, echecs, len(sources), rappels)
     (sortie / f"{nom_fichier}.html").write_text(html, encoding="utf-8")
     pdf = exporter_pdf(html, sortie / f"{nom_fichier}.pdf",
                        f"{cfg.nom_journal} · N° {numero} · {date_longue(jour)}")
     log.info("PDF : %s", pdf)
 
     if dry_run:
-        print(render_texte(journal, jour, cfg.nom_journal))
+        print(render_texte(journal, jour, cfg.nom_journal, rappels))
         log.info("Mode test : la mémoire n'est pas modifiée")
     else:
         objet = journal.accroche or date_longue(jour)
-        envoyer(cfg, f"{cfg.nom_journal} · {objet}", render_texte(journal, jour, cfg.nom_journal), pdf)
+        envoyer(cfg, f"{cfg.nom_journal} · {objet}", render_texte(journal, jour, cfg.nom_journal, rappels), pdf)
         # Mémoire 3 : on n'enregistre qu'après un envoi réussi. Si l'envoi échoue, ces articles restent disponibles demain.
         memoire.enregistrer_edition(jour, numero, journal.accroche, articles_du_journal(journal),
-                                    (journal.notion.titre, journal.notion.niveau) if journal.notion else None)
+                                    (journal.notion.titre, journal.notion.niveau, journal.notion.essentiel) if journal.notion else None)
     memoire.fermer()
     return 0
 

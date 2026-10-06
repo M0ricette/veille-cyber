@@ -40,6 +40,7 @@ Le journal contient :
   2. Mécanismes : comment fonctionne une attaque ou une défense, par exemple le XSS ou la MFA.
   3. Approfondissement : techniques et architectures, par exemple le Kerberoasting ou le zero trust.
   4. Expert : sujets pointus, par exemple les attaques par canal auxiliaire.
+  Ajoute l'essentiel : l'idée clé en une phrase autonome, qui sera reprise en rappel dans les éditions suivantes.
 - Une accroche d'une phrase qui servira d'objet au mail.
 
 Règles absolues :
@@ -99,8 +100,10 @@ OUTILS = [
                         "explication": {"type": "string"},
                         "source": {"type": "string"},
                         "niveau": {"type": "integer", "enum": [1, 2, 3, 4]},
+                        "essentiel": {"type": "string",
+                                      "description": "L'idée clé de la notion en une phrase, réutilisée dans les rappels des jours suivants"},
                     },
-                    "required": ["titre", "explication", "source", "niveau"],
+                    "required": ["titre", "explication", "source", "niveau", "essentiel"],
                 },
             },
             "required": ["accroche", "une", "breves", "notion"],

@@ -71,7 +71,7 @@ def _numeroter_sources(journal: Journal) -> list[Article]:
 
 
 def render_html(journal: Journal, jour: date, numero: int, nom: str, sources_en_echec: list[str],
-                nb_sources: int) -> str:
+                nb_sources: int, rappels: list[dict] = ()) -> str:
     sources = _numeroter_sources(journal)
     num = {a.id: i for i, a in enumerate(sources, 1)}
 
@@ -87,11 +87,11 @@ def render_html(journal: Journal, jour: date, numero: int, nom: str, sources_en_
         j=journal, nom=nom, numero=numero, date_longue=date_longue(jour),
         rubriques=[(r, bs) for r, bs in rubriques if bs], sources=sources, num=num,
         avec_appels=avec_appels, polices=Markup(_polices_css()),
-        sources_en_echec=sources_en_echec, nb_sources=nb_sources,
+        sources_en_echec=sources_en_echec, nb_sources=nb_sources, rappels=list(rappels),
     )
 
 
-def render_texte(journal: Journal, jour: date, nom: str) -> str:
+def render_texte(journal: Journal, jour: date, nom: str, rappels: list[dict] = ()) -> str:
     """Corps du mail : un sommaire court, le journal complet est en pièce jointe."""
     lignes = [f"{nom} du {date_longue(jour)}", ""]
     if journal.accroche:
@@ -102,6 +102,8 @@ def render_texte(journal: Journal, jour: date, nom: str) -> str:
         lignes += ["En bref"] + [f"· {b.titre}" for b in journal.breves] + [""]
     if journal.notion:
         lignes += [f"La notion du jour : {journal.notion.titre}", ""]
+    if rappels:
+        lignes += ["Rappel"] + [f"· {r['titre']} : {r['essentiel']}" for r in rappels] + [""]
     lignes.append("Le journal complet est en pièce jointe.")
     return "\n".join(lignes)
 

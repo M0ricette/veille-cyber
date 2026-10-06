@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass, field
 
 from .collecte import Article
-from .memoire import NIVEAU_MAX, nettoyer_titre, notion_deja_vue
+from .memoire import NIVEAU_MAX, nettoyer_essentiel, nettoyer_titre, notion_deja_vue
 
 RUBRIQUES = ["Menaces et failles", "Fuites et attaques", "Géopolitique et régulation", "Écosystème"]
 
@@ -45,6 +45,7 @@ class Notion:
     explication: str
     source: Article
     niveau: int
+    essentiel: str = ""
 
 
 @dataclass
@@ -135,17 +136,20 @@ def verifier(data: dict, catalogue: dict[str, Article], lus: dict[str, str],
     if n:
         article = catalogue.get(str(n.get("source", "")))
         tout = " ".join(_texte_source(a, lus) for a in catalogue.values())
-        texte = str(n.get("titre", "")) + " " + str(n.get("explication", ""))
+        texte = " ".join(str(n.get(k, "")) for k in ("titre", "explication", "essentiel"))
         if article is None:
             problemes.append(f"notion : source inconnue {n.get('source')}")
         elif manques := _non_sources(texte, tout):
             problemes.append(f"notion : éléments absents des sources {manques}")
+        elif not str(n.get("essentiel", "")).strip():
+            problemes.append("notion : il manque l'essentiel en une phrase, utilisé pour les rappels")
         elif deja := notion_deja_vue(str(n.get("titre", "")), list(notions_vues)):
             problemes.append(f"notion : déjà expliquée lors d'une édition précédente, sous le titre {deja!r}. Choisis-en une autre")
         else:
             niveau = n.get("niveau") if n.get("niveau") in range(1, NIVEAU_MAX + 1) else niveau_cible
             notion = Notion(nettoyer_titre(n.get("titre", "")),
-                            REF_RE.sub("", str(n.get("explication", ""))).strip(), article, niveau)
+                            REF_RE.sub("", str(n.get("explication", ""))).strip(), article, niveau,
+                            nettoyer_essentiel(REF_RE.sub("", str(n["essentiel"]))))
 
     accroche = str(data.get("accroche", "")).strip()
     if _non_sources(accroche, " ".join(_texte_source(a, lus) for a in catalogue.values())):
