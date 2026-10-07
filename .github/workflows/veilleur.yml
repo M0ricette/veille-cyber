@@ -2,10 +2,20 @@ name: Le Veilleur
 
 on:
   schedule:
-    # 4 h 30 UTC : 6 h 30 à Paris en été, 5 h 30 en hiver.
-    # GitHub peut décaler le départ de quelques minutes aux heures chargées.
-    - cron: "30 4 * * *"
+    # GitHub ne garantit pas ses déclenchements planifiés : il peut les retarder,
+    # voire les sauter quand ses serveurs sont chargés. On en prévoit donc trois,
+    # à une minute peu demandée. Le premier qui réussit envoie le journal,
+    # les suivants voient que l'édition du jour est faite et s'arrêtent.
+    # Heures UTC : 6 h 17, 7 h 17 et 8 h 17 à Paris en été, une heure plus tôt en hiver.
+    - cron: "17 4 * * *"
+    - cron: "17 5 * * *"
+    - cron: "17 6 * * *"
   workflow_dispatch:   # bouton « Run workflow » pour lancer une édition à la main
+    inputs:
+      forcer:
+        description: "Publier même si l'édition du jour est déjà partie"
+        type: boolean
+        default: false
 
 permissions:
   contents: write      # seul droit accordé : pousser la mémoire sur la branche memoire
@@ -28,17 +38,27 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Installer les dépendances
-        run: |
-          pip install -r requirements.txt
-          playwright install --with-deps chromium
-
+      # La mémoire passe en premier : elle dit si le travail du jour est déjà fait.
       - name: Récupérer la mémoire
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/memoire_git.sh recuperer
 
+      - name: Vérifier si l'édition du jour est déjà partie
+        id: etat
+        run: |
+          faite=$(python scripts/edition_faite.py data/veilleur.db)
+          echo "faite=$faite" >> "$GITHUB_OUTPUT"
+          if [ "$faite" = "oui" ]; then echo "L'édition du jour est déjà partie : rien à faire."; fi
+
+      - name: Installer les dépendances
+        if: steps.etat.outputs.faite != 'oui' || inputs.forcer
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
       - name: Publier l'édition du jour
+        if: steps.etat.outputs.faite != 'oui' || inputs.forcer
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
@@ -49,13 +69,14 @@ jobs:
 
       # Seulement si l'édition est partie : un échec ne doit rien enregistrer.
       - name: Sauvegarder la mémoire
+        if: steps.etat.outputs.faite != 'oui' || inputs.forcer
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/memoire_git.sh sauvegarder
 
       # Le PDF et la trace de l'agent restent téléchargeables deux semaines, même en cas d'échec.
       - name: Conserver le PDF et la trace
-        if: always()
+        if: always() && (steps.etat.outputs.faite != 'oui' || inputs.forcer)
         uses: actions/upload-artifact@v4
         with:
           name: edition-${{ github.run_id }}
