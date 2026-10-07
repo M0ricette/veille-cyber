@@ -15,8 +15,12 @@ log = logging.getLogger(__name__)
 
 
 def envoyer(cfg: Config, objet: str, texte: str, pdf: Path) -> None:
-    if not (cfg.smtp_user and cfg.smtp_password and cfg.mail_to):
-        raise RuntimeError("SMTP_USER, SMTP_PASSWORD et MAIL_TO doivent être définis dans .env")
+    manquants = [nom for nom, valeur in [("SMTP_USER", cfg.smtp_user), ("SMTP_PASSWORD", cfg.smtp_password),
+                                         ("MAIL_TO", cfg.mail_to)] if not valeur.strip()]
+    if manquants:
+        # On nomme ce qui manque sans jamais afficher de valeur.
+        raise RuntimeError(f"Paramètres mail vides : {', '.join(manquants)}. "
+                           "En local, les définir dans .env. Sur GitHub, dans les secrets Actions du dépôt.")
 
     msg = EmailMessage()
     msg["Subject"] = objet

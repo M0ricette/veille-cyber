@@ -87,7 +87,7 @@ L'agent ne tourne pas en continu. Il se lance chaque matin, travaille quelques m
 
 ### Dans le cloud, avec GitHub Actions
 
-C'est le mode par défaut : aucun ordinateur n'a besoin d'être allumé. Le workflow `.github/workflows/veilleur.yml` se déclenche vers 6 h 30 l'été et 5 h 30 l'hiver, heure de Paris.
+C'est le mode par défaut : aucun ordinateur n'a besoin d'être allumé. GitHub ne garantit pas ses déclenchements planifiés, il peut les retarder ou en sauter. Le workflow `.github/workflows/veilleur.yml` se déclenche donc trois fois chaque matin, à 6 h 17, 7 h 17 et 8 h 17 l'été, une heure plus tôt l'hiver. Le premier passage qui réussit envoie le journal. Les suivants lisent la mémoire, voient que l'édition du jour est partie et s'arrêtent en quelques secondes. Pour republier malgré tout, cocher *forcer* au lancement manuel.
 
 1. Pousser le dépôt sur GitHub.
 2. Dans *Settings > Secrets and variables > Actions*, créer les secrets `ANTHROPIC_API_KEY`, `SMTP_USER`, `SMTP_PASSWORD` et `MAIL_TO`.

@@ -151,6 +151,7 @@ def lancer_agent(articles: list[Article], modele: str, appeler: Callable,
     lus: dict[str, str] = {}
     trace = Trace()
     corrections = 0
+    brouillon: dict = {}   # dernière version complète proposée par l'agent
     titres_vus = [titre for titre, _ in notions_vues]
     messages: list = [{"role": "user", "content":
                        construire_memoire(list(notions_vues), niveau_cible) + "\n\n" + construire_catalogue(articles)}]
@@ -195,14 +196,18 @@ def lancer_agent(articles: list[Article], modele: str, appeler: Callable,
                             "Page inaccessible. Appuie-toi sur le résumé du catalogue ou lis un autre article.", True))
 
             elif appel.name == "publier_journal":
-                journal, problemes = verifier(appel.input, catalogue, lus, titres_vus, niveau_cible)
+                # Quand l'agent corrige, il renvoie parfois seulement la partie corrigée.
+                # On complète avec sa proposition précédente pour ne rien perdre.
+                brouillon = {**brouillon, **{k: v for k, v in dict(appel.input).items() if v}}
+                journal, problemes = verifier(brouillon, catalogue, lus, titres_vus, niveau_cible)
                 trace.ajouter(tour=tour, outil="publier_journal", problemes=problemes)
                 if not problemes or corrections >= MAX_CORRECTIONS or tour == max_tours:
                     # Après deux corrections, on garde seulement ce qui a passé la vérification.
                     return journal, trace
                 corrections += 1
                 resultats.append(_resultat(appel.id,
-                    "Vérification échouée. Corrige ces problèmes puis republie :\n- " + "\n- ".join(problemes), True))
+                    "Vérification échouée. Corrige ces problèmes puis republie le journal complet, "
+                    "avec la une, toutes les brèves et la notion :\n- " + "\n- ".join(problemes), True))
 
             else:
                 resultats.append(_resultat(appel.id, f"Outil inconnu : {appel.name}", True))

@@ -108,3 +108,18 @@ def test_notion_deja_vue_refusee_puis_corrigee(catalogue):
     # La mémoire est bien donnée à l'agent dès le premier message.
     premier = modele.recus[0]["messages"][0]["content"]
     assert "<memoire>" in premier and "Le Smishing" in premier and "2 sur 4" in premier
+
+
+def test_republication_partielle_garde_les_breves_et_la_notion(catalogue):
+    """Bug du 7 octobre : après une correction, l'agent ne renvoyait que la une et perdait le reste."""
+    une_sans_source = {**JOURNAL_OK, "une": {**JOURNAL_OK["une"], "paragraphes": ["Sans source."]}}
+    seulement_la_une = {"accroche": JOURNAL_OK["accroche"], "une": JOURNAL_OK["une"]}
+    modele = FauxModele([
+        [appel("lire_article", {"id": "S1"}, 1)],
+        [appel("publier_journal", une_sans_source, 2)],
+        [appel("publier_journal", seulement_la_une, 3)],
+    ])
+    journal, _ = lancer_agent(catalogue, "test", modele, lire)
+    assert journal.une is not None
+    assert len(journal.breves) == 1
+    assert journal.notion is not None

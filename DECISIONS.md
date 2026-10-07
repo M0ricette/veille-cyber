@@ -52,6 +52,18 @@ Chaque choix tient en trois lignes : ce qui a été choisi, l'alternative écart
 **Alternative.** BeautifulSoup avec des sélecteurs par site.
 **Pourquoi.** trafilatura fonctionne sur n'importe quel site sans réglage et retire menus, publicités et commentaires. Moins de bruit envoyé au modèle, donc moins de coût et moins de surface d'injection.
 
+## Fusionner les corrections de l'agent
+
+**Choix.** Quand l'agent republie après un refus, sa nouvelle proposition complète la précédente au lieu de la remplacer.
+**Alternative.** Ne garder que la dernière proposition.
+**Pourquoi.** Le 7 octobre, l'agent a corrigé sa une puis n'a renvoyé que la une : brèves et notion ont disparu du journal. Un modèle qui corrige se concentre sur ce qu'on lui reproche. Le code ne doit pas dépendre de ce qu'il pense à renvoyer. Un test rejoue ce scénario.
+
+## Une règle secondaire ne doit pas jeter un contenu valide
+
+**Choix.** Si l'agent oublie l'idée clé d'une notion, la première phrase de l'explication la remplace.
+**Alternative.** Refuser la notion.
+**Pourquoi.** Les contrôles bloquants sont réservés à ce qui touche la fiabilité : sources, CVE, chiffres, doublons. Un champ de confort manquant se complète, il ne justifie pas de priver le lecteur de sa notion du jour.
+
 ## Un seul fichier pour parler au modèle
 
 **Choix.** Tout l'accès au fournisseur passe par `llm.py`.
@@ -129,6 +141,12 @@ Chaque choix tient en trois lignes : ce qui a été choisi, l'alternative écart
 **Choix.** Un workflow planifié qui lance une édition chaque matin.
 **Alternative.** Le Planificateur de tâches Windows, ou un petit serveur allumé en permanence.
 **Pourquoi.** L'agent ne tourne que quelques minutes par jour : louer ou laisser allumer une machine n'a pas de sens. GitHub fournit la machine gratuitement à ce volume, et l'historique des exécutions est visible dans le dépôt. Le Planificateur Windows reste documenté en secours.
+
+## Plusieurs déclenchements, une seule édition
+
+**Choix.** Trois déclenchements planifiés chaque matin, et une vérification en mémoire qui arrête les passages suivants dès que l'édition du jour est partie.
+**Alternative.** Un seul déclenchement, ou un service externe qui appelle GitHub à heure fixe.
+**Pourquoi.** GitHub peut sauter un déclenchement planifié, et c'est arrivé dès le premier matin. Déclencher plusieurs fois rend la livraison fiable, et la vérification rend chaque passage supplémentaire inoffensif : c'est le principe de l'idempotence. La vérification tourne avant l'installation des paquets, donc un passage inutile ne coûte que quelques secondes. Si l'envoi échoue, le passage suivant réessaie de lui-même.
 
 ## La mémoire sur une branche dédiée
 

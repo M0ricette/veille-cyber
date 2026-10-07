@@ -61,7 +61,9 @@ def test_rubrique_inventee_remplacee_par_celle_de_la_source(catalogue):
     assert journal.breves[0].rubrique == "Géopolitique et régulation"
 
 
-def test_notion_sans_essentiel_refusee(catalogue):
-    notion = {"titre": "Le XSS", "explication": "Injection de script.", "source": "S1", "niveau": 1}
+def test_notion_sans_essentiel_gardee_avec_la_premiere_phrase(catalogue):
+    notion = {"titre": "Le XSS", "explication": "On injecte du script dans une page. Le navigateur l'exécute.",
+              "source": "S1", "niveau": 1}
     journal, problemes = verifier({"notion": notion}, {a.id: a for a in catalogue}, {})
-    assert journal.notion is None and "essentiel" in problemes[0]
+    assert problemes == []
+    assert journal.notion.essentiel == "On injecte du script dans une page."
